@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Happy Diwali — HD Celebration</title>
+
+    <style>
+        :root{
+            --bg-dark:#040417;
+            --midnight:#0b0b2b;
+            --accent1:#ffd166;
+            --accent2:#ff7b00;
+            --accent3:#ff2d55;
+            --accent4:#7bf1a8;
+            --gold-glow:0 0 18px rgba(255,214,0,0.9);
+        }
+
+        /* Page layout */
+        html,body{height:100%;margin:0;padding:0;background:radial-gradient(1200px 600px at 20% 20%, #1b1540 0%, var(--midnight) 40%, var(--bg-dark) 100%);font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; color:#fff; overflow:hidden;}
+        .stage{position:relative;width:100%;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:30px;box-sizing:border-box;}
+
+        /* Greeting */
+        #greeting-wrap{z-index:40;text-align:center;pointer-events:none;}
+        #greeting{
+            font-weight:800;
+            letter-spacing:1px;
+            display:inline-block;
+            font-size: clamp(28px, 6vw, 64px);
+            color:transparent;
+            background:linear-gradient(90deg,var(--accent1),var(--accent2) 40%,var(--accent3) 80%);
+            -webkit-background-clip:text;background-clip:text;
+            filter:drop-shadow(0 6px 18px rgba(0,0,0,0.6));
+        }
+        #subtext{margin-top:6px;font-size:clamp(12px,2.2vw,20px);color:rgba(255,255,255,0.85);text-shadow:0 2px 6px rgba(0,0,0,0.6);}
+
+        /* Animated per-letter */
+        .letter{display:inline-block;opacity:0;transform:translateY(18px) rotateX(15deg); will-change: transform, opacity; }
+        .letter.show{animation:letterIn 600ms cubic-bezier(.16,.98,.64,1) forwards;}
+        @keyframes letterIn{to{opacity:1;transform:translateY(0) rotateX(0);}}
+
+        /* Controls */
+        .controls{position:fixed;right:18px;top:18px;z-index:60;display:flex;flex-direction:column;gap:8px;background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));backdrop-filter: blur(6px);padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);}
+        .control-btn{background:transparent;color:#fff;border:0;padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:600;display:flex;gap:8px;align-items:center;}
+        .control-btn input{transform:scale(1.1);}
+
+        /* Diyas */
+        .diyas{position:absolute;left:50%;transform:translateX(-50%);bottom:18px;display:flex;gap:18px;align-items:flex-end;z-index:45;pointer-events:auto;}
+        .diya{width:86px;height:56px;position:relative;display:flex;align-items:flex-end;justify-content:center;}
+        .diya svg{width:100%;height:100%;display:block;filter:drop-shadow(0 12px 28px rgba(0,0,0,0.6));}
+
+        /* Lanterns */
+        .lanterns{position:absolute;top:28px;left:50%;transform:translateX(-50%);display:flex;gap:40px;align-items:flex-start;z-index:30;pointer-events:none;}
+        .lantern{width:64px;height:96px;opacity:0.98;transform-origin:top center;animation:swing 5s ease-in-out infinite;}
+        .lantern:nth-child(2){animation-delay: .9s;}
+        .lantern:nth-child(3){animation-delay: 1.8s;}
+        @keyframes swing{0%{transform:rotate(6deg);}50%{transform:rotate(-6deg);}100%{transform:rotate(6deg);} }
+
+        /* Canvas overlays */
+        canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block;z-index:20;pointer-events:none;}
+
+        /* Footer tip */
+        .tip{position:fixed;left:18px;bottom:18px;color:rgba(255,255,255,0.7);font-size:13px;z-index:60;}
+        
+        /* Responsive adjustments */
+        @media (max-width:600px){
+            .controls{right:10px;top:10px;padding:6px;}
+            .diyas{gap:10px;bottom:10px;}
+        }
+    </style>
+</head>
+<body>
+    <div class="stage">
+        <div id="greeting-wrap">
+            <div id="greeting" aria-live="polite"></div>
+            <div id="subtext">Light, colors and joy — celebrate together</div>
+        </div>
+
+        <!-- Decorative Lanterns -->
+        <div class="lanterns" id="lanterns">
+            <div class="lantern">
+                <svg viewBox="0 0 64 96" xmlns="http://www.w3.org/2000/svg" aria-hidden><defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#ff8b3d"/><stop offset="1" stop-color="#ff3b7a"/></linearGradient></defs><rect x="8" y="12" width="48" height="64" rx="8" fill="url(#g1)"/><rect x="28" y="0" width="8" height="12" fill="#b89"/></svg>
+            </div>
+            <div class="lantern">
+                <svg viewBox="0 0 64 96" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g2" x1="0" x2="1"><stop offset="0" stop-color="#6ef0c3"/><stop offset="1" stop-color="#2bb7ff"/></linearGradient></defs><rect x="8" y="12" width="48" height="64" rx="8" fill="url(#g2)"/><rect x="28" y="0" width="8" height="12" fill="#b89"/></svg>
+            </div>
+            <div class="lantern">
+                <svg viewBox="0 0 64 96" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g3" x1="0" x2="1"><stop offset="0" stop-color="#ffd166"/><stop offset="1" stop-color="#ff6b6b"/></linearGradient></defs><rect x="8" y="12" width="48" height="64" rx="8" fill="url(#g3)"/><rect x="28" y="0" width="8" height="12" fill="#b89"/></svg>
+            </div>
+        </div>
+
+        <!-- SVG Diyas (crisp on HD) -->
+        <div class="diyas" id="diyas">
+            <!-- diya 1 -->
+            <div class="diya">
+                <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                    <g transform="translate(10,6)">
+                        <path d="M10 52 C24 28,86 28,100 52 C60 74,20 74,10 52 Z" fill="#8b5a12"/>
+                        <ellipse cx="55" cy="36" rx="36" ry="12" fill="#b8860b" opacity="0.95"/>
+                        <!-- flame -->
+                        <g class="flame" transform="translate(55,18)">
+                            <path d="M0 20 C6 12,10 10,6 2 C2 -6, -6 -2,0 20 Z" fill="url(#flameGrad)"/>
+                        </g>
+                    </g>
+                    <defs>
+                        <linearGradient id="flameGrad" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0" stop-color="#fff9c4"/>
+                            <stop offset="0.25" stop-color="#ffd54f"/>
+                            <stop offset="1" stop-color="#ff6b3b"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+
+            <!-- duplicate diyas for display -->
+            <div class="diya" aria-hidden><!-- ...same SVG can be copied... --></div>
+            <div class="diya" aria-hidden></div>
+            <div class="diya" aria-hidden></div>
+            <div class="diya" aria-hidden></div>
+        </div>
+
+    </div>
+
+    <!-- high-DPI canvas for fireworks/confetti -->
+    <canvas id="fxCanvas"></canvas>
+
+    <!-- Controls -->
+    <div class="controls" id="controls">
+        <label class="control-btn"><input id="toggleFire" type="checkbox" checked> Fireworks</label>
+        <label class="control-btn"><input id="toggleConfetti" type="checkbox" checked> Confetti</label>
+        <label class="control-btn"><input id="toggleLanterns" type="checkbox" checked> Lanterns</label>
+        <label class="control-btn"><input id="toggleMusic" type="checkbox"> Music</label>
+        <button class="control-btn" id="nameBtn" title="Personalize">Set Name</button>
+    </div>
+
+    <div class="tip">Tip: Click "Set Name" to personalize. Tap the page to focus audio controls.</div>
+
+    <script>
+    // -------------------------
+    // Configuration & helpers
+    // -------------------------
+    const greetings = [
+        "Shubh Deepawali",
+        "Happy Diwali",
+        "Diwali Ki Shubhkamnayein",
+        "Festival of Lights",
+        "Light Over Darkness"
+    ];
+    let greetingIndex = 0;
+    let userName = '';
+
+    // per-letter greeting render
+    const greetingEl = document.getElementById('greeting');
+    function showGreeting(text){
+        greetingEl.innerHTML = '';
+        const full = text;
+        for(let i=0;i<full.length;i++){
+            const sp = document.createElement('span');
+            sp.className='letter';
+            sp.textContent = full[i];
+            greetingEl.appendChild(sp);
+            // stagger in
+            requestAnimationFrame(()=> {
+                setTimeout(()=> sp.classList.add('show'), i * 45);
+            });
+        }
+    }
+
+    function cycleGreetings(){
+        const namePart = userName ? `, ${userName}!` : '!';
+        const g = `${greetings[greetingIndex]}${namePart}`;
+        showGreeting(g);
+        greetingIndex = (greetingIndex + 1) % greetings.length;
+        setTimeout(cycleGreetings, 4200);
+    }
+
+    // prompt for name
+    document.getElementById('nameBtn').addEventListener('click', () => {
+        const val = prompt('Enter your name for a personalized greeting:', userName || '');
+        if(val!==null){
+            userName = val.trim().slice(0,40);
+        }
+    });
+
+    // -------------------------
+    // Canvas FX (fireworks + confetti)
+    // -------------------------
+    const canvas = document.getElementById('fxCanvas');
+    const ctx = canvas.getContext('2d', { alpha: true });
+    let DPR = Math.max(1, window.devicePixelRatio || 1);
+
+    function resizeCanvas(){
+        DPR = Math.max(1, window.devicePixelRatio || 1);
+        canvas.width = Math.floor(innerWidth * DPR);
+        canvas.height = Math.floor(innerHeight * DPR);
+        canvas.style.width = innerWidth + 'px';
+        canvas.style.height = innerHeight + 'px';
+        ctx.setTransform(DPR,0,0,DPR,0,0);
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // particles
+    const particles = [];
+    const fireworksOn = {val:true};
+    const confettiOn = {val:true};
+
+    function rand(min,max){return Math.random()*(max-min)+min;}
+    function hueColor(h){return `hsl(${h},90%,60%)`;}
+
+    // Firework emitter
+    function spawnFirework(){
+        if(!fireworksOn.val) return;
+        const x = rand(0.15*innerWidth, 0.85*innerWidth);
+        const y = rand(0.1*innerHeight, 0.6*innerHeight);
+        const hue = Math.floor(rand(0,360));
+        // create burst particles
+        const count = Math.floor(rand(16,40));
+        for(let i=0;i<count;i++){
+            const angle = Math.random()*Math.PI*2;
+            const speed = rand(1.6,6.5);
+            particles.push({
+                x,y,
+                vx: Math.cos(angle)*speed,
+                vy: Math.sin(angle)*speed,
+                life: rand(700,1400),
+                age:0,
+                size: rand(1.6,3.8),
+                color: hueColor((hue + rand(-20,20))|0),
+                fade: rand(0.0025,0.0045),
+            });
+        }
+    }
+
+    // Confetti emitter
+    function spawnConfettiBurst(){
+        if(!confettiOn.val) return;
+        const baseY = -10;
+        const count = Math.floor(rand(20,60));
+        for(let i=0;i<count;i++){
+            particles.push({
+                x: rand(0, innerWidth),
+                y: baseY + rand(-30,30),
+                vx: rand(-0.5,0.9),
+                vy: rand(0.8,3),
+                life: rand(2400,5600),
+                age:0,
+                size: rand(4,10),
+                color: ['#ffd166','#ff6b6b','#7bf1a8','#9be7ff'][Math.floor(rand(0,4))],
+                shape: 'confetti',
+                rotate: rand(0,360),
+                rotSpeed: rand(-0.08,0.08),
+                gravity: 0.02,
+                drag: 0.995
+            });
+        }
+    }
+
+    // animation loop
+    let last = performance.now();
+    function tick(now){
+        const dt = now - last;
+        last = now;
+        // clear with slight trails
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.clearRect(0,0,innerWidth, innerHeight);
+
+        // update and draw
+        for(let i=particles.length-1;i>=0;i--){
+            const p = particles[i];
+            p.age += dt;
+            if(p.shape === 'confetti'){
+                p.vy += p.gravity * (dt/16);
+                p.vx *= p.drag;
+                p.x += p.vx * (dt/16) * 60/16;
+                p.y += p.vy * (dt/16) * 60/16;
+                p.rotate += p.rotSpeed * dt;
+                const t = 1 - Math.min(1, p.age / p.life);
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotate);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = Math.max(0.02, t);
+                ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size*0.6);
+                ctx.restore();
+            } else {
+                // firework particle
+                p.vy += 0.012 * (dt/16);
+                p.vx *= 0.998;
+                p.vy *= 0.998;
+                p.x += p.vx * (dt/16) * 60/16;
+                p.y += p.vy * (dt/16) * 60/16;
+                const t = 1 - Math.min(1, p.age / p.life);
+                ctx.beginPath();
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = Math.max(0, t);
+                ctx.arc(p.x, p.y, p.size * (1 + (1-t)*0.6), 0, Math.PI*2);
+                ctx.fill();
+                // glow
+                ctx.beginPath();
+                ctx.globalAlpha = Math.max(0, t*0.18);
+                ctx.fillStyle = p.color;
+                ctx.arc(p.x, p.y, p.size * 7 * (1 - t*0.3), 0, Math.PI*2);
+                ctx.fill();
+            }
+            if(p.age > p.life){
+                particles.splice(i,1);
+            }
+        }
+
+        requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+
+    // periodic emitters
+    setInterval(()=>{ if(fireworksOn.val) spawnFirework(); }, 1800);
+    setInterval(()=>{ if(confettiOn.val) spawnConfettiBurst(); }, 900);
+
+    // controls wiring
+    const toggleFire = document.getElementById('toggleFire');
+    const toggleConfetti = document.getElementById('toggleConfetti');
+    const toggleLanterns = document.getElementById('toggleLanterns');
+    const toggleMusic = document.getElementById('toggleMusic');
+    toggleFire.addEventListener('change', e => fireworksOn.val = e.target.checked);
+    toggleConfetti.addEventListener('change', e => confettiOn.val = e.target.checked);
+    toggleLanterns.addEventListener('change', e => {
+        document.getElementById('lanterns').style.display = e.target.checked ? 'flex' : 'none';
+    });
+
+    // simple ambient sound (optional)
+    let audio;
+    toggleMusic.addEventListener('change', (e) => {
+        if(e.target.checked){
+            try {
+                audio = new Audio(''); // leave blank or set a local path to an mp3 if available
+                audio.loop = true;
+                audio.volume = 0.28;
+                audio.play().catch(()=>{/* user gesture required */});
+            } catch(err){}
+        } else {
+            if(audio){ audio.pause(); audio = null; }
+        }
+    });
+
+    // initial greeting cycle
+    cycleGreetings();
+
+    // initial personalization via prompt on load (non-blocking)
+    window.addEventListener('load', ()=>{
+        setTimeout(()=> {
+            const name = prompt('Enter your name for a personalized greeting (or leave blank):','');
+            if(name !== null && name.trim() !== '') userName = name.trim();
+        }, 600);
+    });
+
+    // small enhancement: flicker flame CSS applied via JS to create soft animation
+    (function addFlameFlicker(){
+        const flames = document.querySelectorAll('.flame');
+        flames.forEach((g,i)=> {
+            g.style.transition = 'transform 0.18s ease, opacity 0.18s ease';
+            function flick(){
+                g.style.transform = `translateY(${rand(-2,2)}px) rotate(${rand(-4,4)}deg) scale(${rand(0.96,1.06)})`;
+                g.style.opacity = rand(0.86,1);
+                setTimeout(flick, rand(120,380));
+            }
+            flick();
+        });
+    })();
+
+    // Populate the empty diya placeholders with identical SVG markup for crispness
+    (function cloneDiyas(){
+        const template = document.querySelector('.diyas .diya svg').outerHTML;
+        document.querySelectorAll('.diyas .diya').forEach((el, idx) => {
+            if(!el.querySelector('svg')){
+                el.innerHTML = template;
+                // slightly offset scale for style
+                el.style.transform = `translateY(0px) scale(${1 - (idx%3)*0.03})`;
+            }
+        });
+    })();
+
+    // Accessibility: allow keyboard "n" to prompt for name
+    window.addEventListener('keydown', e => { if(e.key.toLowerCase()==='n') document.getElementById('nameBtn').click(); });
+
+    </script>
+</body>
+</html>
