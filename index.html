@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Happy Diwali!!</title>
+    <title>Happy Diwali — Celebration</title>
 
     <style>
         :root{
@@ -14,6 +14,7 @@
             --accent3:#ff2d55;
             --accent4:#7bf1a8;
             --gold-glow:0 0 18px rgba(255,214,0,0.9);
+            --greeting-grad: linear-gradient(90deg,var(--accent1),var(--accent2) 40%,var(--accent3) 80%);
         }
 
         /* Page layout */
@@ -24,25 +25,28 @@
         #greeting-wrap{z-index:40;text-align:center;pointer-events:none;}
         #greeting{
             font-weight:800;
-            letter-spacing:1px;
+            letter-spacing:3px;
+            word-spacing: 6px;
             display:inline-block;
             font-size: clamp(28px, 6vw, 64px);
-            color:transparent;
-            background:linear-gradient(90deg,var(--accent1),var(--accent2) 40%,var(--accent3) 80%);
-            -webkit-background-clip:text;background-clip:text;
+            /* gradient applied per-letter in JS for mobile compatibility */
+            color:var(--accent1);
             filter:drop-shadow(0 6px 18px rgba(0,0,0,0.6));
+            text-rendering:optimizeLegibility;
+            -webkit-font-smoothing:antialiased;
         }
         #subtext{margin-top:6px;font-size:clamp(12px,2.2vw,20px);color:rgba(255,255,255,0.85);text-shadow:0 2px 6px rgba(0,0,0,0.6);}
 
         /* Animated per-letter */
-        .letter{display:inline-block;opacity:0;transform:translateY(18px) rotateX(15deg); will-change: transform, opacity; }
-        .letter.show{animation:letterIn 600ms cubic-bezier(.16,.98,.64,1) forwards;}
-        @keyframes letterIn{to{opacity:1;transform:translateY(0) rotateX(0);}}
+        .letter{display:inline-block;opacity:0;transform:translateY(18px) rotateX(0deg); will-change: transform, opacity; -webkit-text-fill-color: transparent;}
+        .letter.show{animation:letterIn 900ms cubic-bezier(.16,.98,.64,1) forwards;}
+        @keyframes letterIn{to{opacity:1;transform:translateY(0) rotateX(0);} }
 
-        /* Controls */
-        .controls{position:fixed;right:18px;top:18px;z-index:60;display:flex;flex-direction:column;gap:8px;background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));backdrop-filter: blur(6px);padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);}
-        .control-btn{background:transparent;color:#fff;border:0;padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:600;display:flex;gap:8px;align-items:center;}
-        .control-btn input{transform:scale(1.1);}
+        /* ensure visible gap for spaces between words (tweak value to increase/decrease) */
+        .letter.space{
+            display:inline-block;   /* keep consistent with .letter */
+            min-width:0.4em;        /* adjust: 0.4em -> smaller gap, 0.8em -> larger gap */
+        }
 
         /* Diyas */
         .diyas{position:absolute;left:50%;transform:translateX(-50%);bottom:18px;display:flex;gap:18px;align-items:flex-end;z-index:45;pointer-events:auto;}
@@ -59,13 +63,68 @@
         /* Canvas overlays */
         canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block;z-index:20;pointer-events:none;}
 
-        /* Footer tip */
-        .tip{position:fixed;left:18px;bottom:18px;color:rgba(255,255,255,0.7);font-size:13px;z-index:60;}
-        
+        /* name button + centered animated modal */
+        .name-btn{
+            position:fixed;right:14px;bottom:14px;z-index:90;width:48px;height:48px;border-radius:50%;border:0;background:linear-gradient(180deg,var(--accent2),var(--accent3));color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(0,0,0,0.45);cursor:pointer;
+        }
+
+        /* container controls overlay + modal show state */
+        .name-container.hidden { display:none; }
+        .name-container .modal-overlay{
+            position:fixed;inset:0;background:rgba(2,6,23,0.62);backdrop-filter:blur(6px);z-index:88;opacity:0;visibility:hidden;transition:opacity .28s ease, visibility .28s;
+        }
+        .name-container .name-modal{
+            position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(0.92);opacity:0;background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));padding:18px;box-sizing:border-box;border-radius:12px;z-index:89;max-width:90vw;min-width:280px;box-shadow:0 12px 40px rgba(0,0,0,0.6);transition:transform .28s cubic-bezier(.2,.9,.26,1), opacity .28s;
+        }
+        /* visible state */
+        .name-container.show .modal-overlay{opacity:1;visibility:visible;}
+        .name-container.show .name-modal{opacity:1;transform:translate(-50%,-50%) scale(1);}
+
+        .name-row{display:flex;flex-direction:column;gap:8px;align-items:stretch;}
+        .name-row .row-inline{display:flex;gap:8px;align-items:center;}
+        .name-row input{flex:1;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.3);color:#fff;font-size:16px;}
+        .name-row .actions{display:flex;gap:8px;justify-content:flex-end;}
+        .btn{padding:10px 12px;border-radius:10px;border:0;background:var(--accent2);color:#111;font-weight:700;cursor:pointer;}
+        .btn.ghost{background:#999;color:#111;}
+
+        /* credit / author badge */
+        .credit{
+            position:fixed;
+            left:50%;
+            bottom:70px;
+            transform:translateX(-50%) translateY(0);
+            z-index:100;
+            color:#fff;
+            font-weight:700;
+            font-size:16px;
+            padding:8px 12px;
+            border-radius:10px;
+            background:linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+            box-shadow:0 10px 30px rgba(0,0,0,0.45);
+            opacity:0;
+            pointer-events:none; /* decorative only */
+            animation:creditFade 700ms ease forwards, creditFloat 3.8s ease-in-out 700ms infinite;
+            will-change:transform,opacity;
+        }
+        .credit:hover{
+            transform:translateX(-50%) scale(1.03);
+            transition:transform .22s ease;
+            pointer-events:auto;
+        }
+        @keyframes creditFade{ from{opacity:0} to{opacity:1} }
+        @keyframes creditFloat{
+            0%{ transform:translateX(-50%) translateY(0); }
+            50%{ transform:translateX(-50%) translateY(-6px); }
+            100%{ transform:translateX(-50%) translateY(0); }
+        }
+        @media (max-width:420px){
+            .credit{ bottom:74px; font-size:13px; padding:6px 10px; }
+        }
+
         /* Responsive adjustments */
         @media (max-width:600px){
-            .controls{right:10px;top:10px;padding:6px;}
             .diyas{gap:10px;bottom:10px;}
+            .name-container .name-modal{padding:14px;min-width:240px;}
         }
     </style>
 </head>
@@ -73,7 +132,7 @@
     <div class="stage">
         <div id="greeting-wrap">
             <div id="greeting" aria-live="polite"></div>
-            <div id="subtext">Light, colors and joy — celebrate together</div>
+            <div id="subtext">May the light of the Diyas brighten your life this Diwali, illuminating your path to success✨</div>
         </div>
 
         <!-- Decorative Lanterns -->
@@ -124,264 +183,237 @@
     <!-- high-DPI canvas for fireworks/confetti -->
     <canvas id="fxCanvas"></canvas>
 
-    <!-- Controls -->
-    <div class="controls" id="controls">
-        <label class="control-btn"><input id="toggleFire" type="checkbox" checked> Fireworks</label>
-        <label class="control-btn"><input id="toggleConfetti" type="checkbox" checked> Confetti</label>
-        <label class="control-btn"><input id="toggleLanterns" type="checkbox" checked> Lanterns</label>
-        <label class="control-btn"><input id="toggleMusic" type="checkbox"> Music</label>
-        <button class="control-btn" id="nameBtn" title="Personalize">Set Name</button>
+    <!-- name button + centered animated modal container -->
+    <button id="nameBtn" class="name-btn" title="Set name" aria-label="Set name">✎</button>
+
+    <div id="nameContainer" class="name-container hidden" aria-hidden="true">
+        <div class="modal-overlay" id="modalOverlay"></div>
+        <div class="name-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <div id="modalTitle" style="font-weight:800;margin-bottom:6px">What's your name?🤔</div>
+            <div class="name-row">
+                <input id="nameInput" type="text" maxlength="40" placeholder="Enter name (will be saved for this session)" inputmode="text" />
+                <div class="actions" style="display:flex;justify-content:flex-end;margin-top:8px;gap:8px;">
+                    <button id="saveName" class="btn">Save</button>
+                    <button id="clearName" class="btn ghost">Clear</button>
+                    <button id="closeModal" class="btn ghost">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="tip">Tip: Click "Set Name" to personalize. Tap the page to focus audio controls.</div>
+    <!-- place this near the end of the <body> (above closing </body>) -->
+    <h2 class="credit" aria-hidden="true">~Made by Tanish Khandelwal~</h2>
 
     <script>
     // -------------------------
     // Configuration & helpers
     // -------------------------
     const greetings = [
-        "Shubh Deepawali",
-        "Happy Diwali",
-        "Diwali Ki Shubhkamnayein",
-        "Light Over Darkness"
+        "Wishing You a Joyous Diwali",
     ];
     let greetingIndex = 0;
-    let userName = '';
+    // change localStorage -> sessionStorage
+    let userName = sessionStorage.getItem('diwali_name') || '';
 
-    // per-letter greeting render
+    // DOM refs
     const greetingEl = document.getElementById('greeting');
+    const nameBtn = document.getElementById('nameBtn');
+    const nameContainer = document.getElementById('nameContainer');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const nameInput = document.getElementById('nameInput');
+    const saveName = document.getElementById('saveName');
+    const clearName = document.getElementById('clearName');
+    const closeModal = document.getElementById('closeModal');
+
+    // Utils
+    function rand(min,max){return Math.random()*(max-min)+min;}
+    function supportsBackgroundClipText(){
+        return typeof CSS !== 'undefined' && (CSS.supports('-webkit-background-clip','text') || CSS.supports('background-clip','text'));
+    }
+
+    // per-letter greeting render with mobile-safe gradient application
     function showGreeting(text){
         greetingEl.innerHTML = '';
-        const full = text;
-        for(let i=0;i<full.length;i++){
+        const useClip = supportsBackgroundClipText();
+        const gradCSS = getComputedStyle(document.documentElement).getPropertyValue('--greeting-grad') || 'linear-gradient(90deg,#ffd166,#ff7b00 40%,#ff2d55 80%)';
+        const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent1') || '#ffd166';
+
+        for(let i=0;i<text.length;i++){
+            const ch = text[i];
             const sp = document.createElement('span');
-            sp.className='letter';
-            sp.textContent = full[i];
+            sp.className = 'letter';
+
+            if(/\s/.test(ch)){
+                // use non-breaking space so the browser preserves width,
+                // and add a dedicated class to control spacing.
+                sp.classList.add('space');
+                sp.textContent = '\u00A0';
+            } else {
+                sp.textContent = ch;
+            }
+
+            // gradient/fallback handling (same as before)
+            if(useClip && ch.trim().length > 0){
+                sp.style.background = gradCSS;
+                sp.style.webkitBackgroundClip = 'text';
+                sp.style.backgroundClip = 'text';
+                sp.style.webkitTextFillColor = 'transparent';
+                sp.style.backgroundSize = '200% 100%';
+                sp.style.backgroundPosition = '0 0';
+            } else if (ch.trim().length > 0) {
+                sp.style.color = accent;
+                sp.style.webkitTextFillColor = '';
+            }
+
             greetingEl.appendChild(sp);
-            // stagger in
-            requestAnimationFrame(()=> {
-                setTimeout(()=> sp.classList.add('show'), i * 45);
-            });
+
+            (function(s, idx){
+                requestAnimationFrame(() => {
+                    // force layout then animate
+                    void s.offsetWidth;
+                    setTimeout(()=> s.classList.add('show'), idx * 45);
+                });
+            })(sp, i);
         }
     }
 
+    function buildGreetingString(){
+        const namePart = userName ? `, ${userName}` : '';
+        return `${greetings[greetingIndex]}${namePart}!`;
+    }
+
     function cycleGreetings(){
-        const namePart = userName ? `, ${userName}!` : '!';
-        const g = `${greetings[greetingIndex]}${namePart}`;
+        const g = buildGreetingString();
         showGreeting(g);
         greetingIndex = (greetingIndex + 1) % greetings.length;
         setTimeout(cycleGreetings, 4200);
     }
 
-    // prompt for name
-    document.getElementById('nameBtn').addEventListener('click', () => {
-        const val = prompt('Enter your name for a personalized greeting:', userName || '');
-        if(val!==null){
-            userName = val.trim().slice(0,40);
+    // Start cycle after DOM + fonts + visibility ready for reliability on mobile
+    function startGreetingCycleWhenReady(){
+        function tryStart(){
+            if (document.hidden) return;
+            setTimeout(()=> {
+                greetingIndex = 0;
+                cycleGreetings();
+            }, 100);
         }
-    });
-
-    // -------------------------
-    // Canvas FX (fireworks + confetti)
-    // -------------------------
-    const canvas = document.getElementById('fxCanvas');
-    const ctx = canvas.getContext('2d', { alpha: true });
-    let DPR = Math.max(1, window.devicePixelRatio || 1);
-
-    function resizeCanvas(){
-        DPR = Math.max(1, window.devicePixelRatio || 1);
-        canvas.width = Math.floor(innerWidth * DPR);
-        canvas.height = Math.floor(innerHeight * DPR);
-        canvas.style.width = innerWidth + 'px';
-        canvas.style.height = innerHeight + 'px';
-        ctx.setTransform(DPR,0,0,DPR,0,0);
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    // particles
-    const particles = [];
-    const fireworksOn = {val:true};
-    const confettiOn = {val:true};
-
-    function rand(min,max){return Math.random()*(max-min)+min;}
-    function hueColor(h){return `hsl(${h},90%,60%)`;}
-
-    // Firework emitter
-    function spawnFirework(){
-        if(!fireworksOn.val) return;
-        const x = rand(0.15*innerWidth, 0.85*innerWidth);
-        const y = rand(0.1*innerHeight, 0.6*innerHeight);
-        const hue = Math.floor(rand(0,360));
-        // create burst particles
-        const count = Math.floor(rand(16,40));
-        for(let i=0;i<count;i++){
-            const angle = Math.random()*Math.PI*2;
-            const speed = rand(1.6,6.5);
-            particles.push({
-                x,y,
-                vx: Math.cos(angle)*speed,
-                vy: Math.sin(angle)*speed,
-                life: rand(700,1400),
-                age:0,
-                size: rand(1.6,3.8),
-                color: hueColor((hue + rand(-20,20))|0),
-                fade: rand(0.0025,0.0045),
-            });
-        }
-    }
-
-    // Confetti emitter
-    function spawnConfettiBurst(){
-        if(!confettiOn.val) return;
-        const baseY = -10;
-        const count = Math.floor(rand(20,60));
-        for(let i=0;i<count;i++){
-            particles.push({
-                x: rand(0, innerWidth),
-                y: baseY + rand(-30,30),
-                vx: rand(-0.5,0.9),
-                vy: rand(0.8,3),
-                life: rand(2400,5600),
-                age:0,
-                size: rand(4,10),
-                color: ['#ffd166','#ff6b6b','#7bf1a8','#9be7ff'][Math.floor(rand(0,4))],
-                shape: 'confetti',
-                rotate: rand(0,360),
-                rotSpeed: rand(-0.08,0.08),
-                gravity: 0.02,
-                drag: 0.995
-            });
-        }
-    }
-
-    // animation loop
-    let last = performance.now();
-    function tick(now){
-        const dt = now - last;
-        last = now;
-        // clear with slight trails
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.clearRect(0,0,innerWidth, innerHeight);
-
-        // update and draw
-        for(let i=particles.length-1;i>=0;i--){
-            const p = particles[i];
-            p.age += dt;
-            if(p.shape === 'confetti'){
-                p.vy += p.gravity * (dt/16);
-                p.vx *= p.drag;
-                p.x += p.vx * (dt/16) * 60/16;
-                p.y += p.vy * (dt/16) * 60/16;
-                p.rotate += p.rotSpeed * dt;
-                const t = 1 - Math.min(1, p.age / p.life);
-                ctx.save();
-                ctx.translate(p.x, p.y);
-                ctx.rotate(p.rotate);
-                ctx.fillStyle = p.color;
-                ctx.globalAlpha = Math.max(0.02, t);
-                ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size*0.6);
-                ctx.restore();
-            } else {
-                // firework particle
-                p.vy += 0.012 * (dt/16);
-                p.vx *= 0.998;
-                p.vy *= 0.998;
-                p.x += p.vx * (dt/16) * 60/16;
-                p.y += p.vy * (dt/16) * 60/16;
-                const t = 1 - Math.min(1, p.age / p.life);
-                ctx.beginPath();
-                ctx.fillStyle = p.color;
-                ctx.globalAlpha = Math.max(0, t);
-                ctx.arc(p.x, p.y, p.size * (1 + (1-t)*0.6), 0, Math.PI*2);
-                ctx.fill();
-                // glow
-                ctx.beginPath();
-                ctx.globalAlpha = Math.max(0, t*0.18);
-                ctx.fillStyle = p.color;
-                ctx.arc(p.x, p.y, p.size * 7 * (1 - t*0.3), 0, Math.PI*2);
-                ctx.fill();
-            }
-            if(p.age > p.life){
-                particles.splice(i,1);
-            }
-        }
-
-        requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-
-    // periodic emitters
-    setInterval(()=>{ if(fireworksOn.val) spawnFirework(); }, 1800);
-    setInterval(()=>{ if(confettiOn.val) spawnConfettiBurst(); }, 900);
-
-    // controls wiring
-    const toggleFire = document.getElementById('toggleFire');
-    const toggleConfetti = document.getElementById('toggleConfetti');
-    const toggleLanterns = document.getElementById('toggleLanterns');
-    const toggleMusic = document.getElementById('toggleMusic');
-    toggleFire.addEventListener('change', e => fireworksOn.val = e.target.checked);
-    toggleConfetti.addEventListener('change', e => confettiOn.val = e.target.checked);
-    toggleLanterns.addEventListener('change', e => {
-        document.getElementById('lanterns').style.display = e.target.checked ? 'flex' : 'none';
-    });
-
-    // simple ambient sound (optional)
-    let audio;
-    toggleMusic.addEventListener('change', (e) => {
-        if(e.target.checked){
-            try {
-                audio = new Audio(''); // leave blank or set a local path to an mp3 if available
-                audio.loop = true;
-                audio.volume = 0.28;
-                audio.play().catch(()=>{/* user gesture required */});
-            } catch(err){}
+        if(document.fonts && document.fonts.ready){
+            document.fonts.ready.then(tryStart).catch(tryStart);
         } else {
-            if(audio){ audio.pause(); audio = null; }
+            tryStart();
         }
-    });
+    }
 
-    // initial greeting cycle
-    cycleGreetings();
-
-    // initial personalization via prompt on load (non-blocking)
-    window.addEventListener('load', ()=>{
-        setTimeout(()=> {
-            const name = prompt('Enter your name for a personalized greeting (or leave blank):','');
-            if(name !== null && name.trim() !== '') userName = name.trim();
-        }, 600);
-    });
-
-    // small enhancement: flicker flame CSS applied via JS to create soft animation
-    (function addFlameFlicker(){
-        const flames = document.querySelectorAll('.flame');
-        flames.forEach((g,i)=> {
-            g.style.transition = 'transform 0.18s ease, opacity 0.18s ease';
-            function flick(){
-                g.style.transform = `translateY(${rand(-2,2)}px) rotate(${rand(-4,4)}deg) scale(${rand(0.96,1.06)})`;
-                g.style.opacity = rand(0.86,1);
-                setTimeout(flick, rand(120,380));
-            }
-            flick();
+    // Animated modal controls
+    function openNameModal(autoOpen=false){
+        nameInput.value = userName || '';
+        nameContainer.classList.remove('hidden');
+        // ensure a frame to allow transition
+        requestAnimationFrame(()=> {
+            nameContainer.classList.add('show');
+            nameContainer.setAttribute('aria-hidden','false');
         });
+        // Focus input on user-triggered opens; avoid forcing keyboard on autoOpen to reduce mobile issues
+        if(!autoOpen) setTimeout(()=> nameInput.focus(), 160);
+    }
+    function closeNameModal(){
+        nameContainer.classList.remove('show');
+        nameContainer.setAttribute('aria-hidden','true');
+        // wait for transition then hide to remove from tab order
+        setTimeout(()=> {
+            if(!nameContainer.classList.contains('show')) nameContainer.classList.add('hidden');
+        }, 320);
+    }
+
+    // interactions
+    nameBtn.addEventListener('click', () => openNameModal(false));
+    modalOverlay.addEventListener('click', closeNameModal);
+    saveName.addEventListener('click', () => {
+        userName = nameInput.value.trim().slice(0,40);
+        sessionStorage.setItem('diwali_name', userName);
+        closeNameModal();
+        greetingIndex = 0;
+        setTimeout(()=> { showGreeting(buildGreetingString()); }, 50);
+    });
+    clearName.addEventListener('click', () => {
+        userName = '';
+        sessionStorage.removeItem('diwali_name');
+        nameInput.value = '';
+        closeNameModal();
+        greetingIndex = 0;
+        setTimeout(()=> { showGreeting(buildGreetingString()); }, 50);
+    });
+
+    // auto-open modal on first visit of this session (if no name)
+    (function autoPromptName(){
+        const prompted = sessionStorage.getItem('diwali_name_prompted_v1');
+        if(!userName && !prompted){
+            sessionStorage.setItem('diwali_name_prompted_v1','1');
+            setTimeout(()=> openNameModal(true), 700);
+        }
     })();
 
-    // Populate the empty diya placeholders with identical SVG markup for crispness
+    // restart animation when page becomes visible or orientation changes
+    document.addEventListener('visibilitychange', () => {
+        if(!document.hidden){
+            greetingIndex = 0;
+            setTimeout(cycleGreetings, 120);
+        }
+    });
+    window.addEventListener('orientationchange', () => {
+        setTimeout(()=> { greetingIndex = 0; cycleGreetings(); }, 220);
+    });
+
+    // ensure flames flicker and diyas clone
+    (function addFlameFlicker(){
+        function flickAll(){
+            const flames = document.querySelectorAll('.flame');
+            flames.forEach((g)=> {
+                try {
+                    g.style.transition = 'transform 0.18s ease, opacity 0.18s ease';
+                    g.style.transform = `translateY(${rand(-2,2)}px) rotate(${rand(-4,4)}deg) scale(${rand(0.96,1.06)})`;
+                    g.style.opacity = rand(0.86,1);
+                } catch(e){}
+            });
+            setTimeout(flickAll, rand(120,380));
+        }
+        flickAll();
+    })();
+
     (function cloneDiyas(){
-        const template = document.querySelector('.diyas .diya svg').outerHTML;
+        const first = document.querySelector('.diyas .diya svg');
+        if(!first) return;
+        const template = first.outerHTML;
         document.querySelectorAll('.diyas .diya').forEach((el, idx) => {
             if(!el.querySelector('svg')){
                 el.innerHTML = template;
-                // slightly offset scale for style
                 el.style.transform = `translateY(0px) scale(${1 - (idx%3)*0.03})`;
             }
         });
     })();
 
-    // Accessibility: allow keyboard "n" to prompt for name
-    window.addEventListener('keydown', e => { if(e.key.toLowerCase()==='n') document.getElementById('nameBtn').click(); });
+    // Canvas FX (unchanged behaviour)
+    const canvas = document.getElementById('fxCanvas');
+    const ctx = canvas.getContext('2d', { alpha: true });
+    let DPR = Math.max(1, window.devicePixelRatio || 1);
+    function resizeCanvas(){ DPR = Math.max(1, window.devicePixelRatio || 1); canvas.width = Math.floor(innerWidth * DPR); canvas.height = Math.floor(innerHeight * DPR); canvas.style.width = innerWidth + 'px'; canvas.style.height = innerHeight + 'px'; ctx.setTransform(DPR,0,0,DPR,0,0); }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    const particles = [];
+    const fireworksOn = {val:true};
+    const confettiOn = {val:true};
+    function hueColor(h){return `hsl(${h},90%,60%)`;}
+    function spawnFirework(){ if(!fireworksOn.val) return; const x = rand(0.15*innerWidth, 0.85*innerWidth); const y = rand(0.1*innerHeight, 0.6*innerHeight); const hue = Math.floor(rand(0,360)); const count = Math.floor(rand(16,40)); for(let i=0;i<count;i++){ const angle = Math.random()*Math.PI*2; const speed = rand(1.6,6.5); particles.push({ x,y, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed, life: rand(700,1400), age:0, size: rand(1.6,3.8), color: hueColor((hue + rand(-20,20))|0), }); } }
+    function spawnConfettiBurst(){ if(!confettiOn.val) return; const baseY = -10; const count = Math.floor(rand(20,60)); for(let i=0;i<count;i++){ particles.push({ x: rand(0, innerWidth), y: baseY + rand(-30,30), vx: rand(-0.5,0.9), vy: rand(0.8,3), life: rand(2400,5600), age:0, size: rand(4,10), color: ['#ffd166','#ff6b6b','#7bf1a8','#9be7ff'][Math.floor(rand(0,4))], shape: 'confetti', rotate: rand(0,360), rotSpeed: rand(-0.08,0.08), gravity: 0.02, drag: 0.995 }); } }
+    let last = performance.now();
+    function tick(now){ const dt = now - last; last = now; ctx.globalCompositeOperation = 'source-over'; ctx.clearRect(0,0,innerWidth, innerHeight); for(let i=particles.length-1;i>=0;i--){ const p = particles[i]; p.age += dt; if(p.shape === 'confetti'){ p.vy += p.gravity * (dt/16); p.vx *= p.drag; p.x += p.vx * (dt/16) * 60/16; p.y += p.vy * (dt/16) * 60/16; p.rotate += p.rotSpeed * dt; const t = 1 - Math.min(1, p.age / p.life); ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotate); ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0.02, t); ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size*0.6); ctx.restore(); } else { p.vy += 0.012 * (dt/16); p.vx *= 0.998; p.vy *= 0.998; p.x += p.vx * (dt/16) * 60/16; p.y += p.vy * (dt/16) * 60/16; const t = 1 - Math.min(1, p.age / p.life); ctx.beginPath(); ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0, t); ctx.arc(p.x, p.y, p.size * (1 + (1-t)*0.6), 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.globalAlpha = Math.max(0, t*0.18); ctx.fillStyle = p.color; ctx.arc(p.x, p.y, p.size * 7 * (1 - t*0.3), 0, Math.PI*2); ctx.fill(); } if(p.age > p.life){ particles.splice(i,1); } } requestAnimationFrame(tick); }
+    requestAnimationFrame(tick);
+    setInterval(()=>{ if(fireworksOn.val) spawnFirework(); }, 1800);
+    setInterval(()=>{ if(confettiOn.val) spawnConfettiBurst(); }, 900);
 
+    // Start greetings when ready
+    document.addEventListener('DOMContentLoaded', startGreetingCycleWhenReady);
     </script>
 </body>
-
 </html>
