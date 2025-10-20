@@ -25,7 +25,7 @@
         #greeting-wrap{z-index:40;text-align:center;pointer-events:none;}
         #greeting{
             font-weight:800;
-            letter-spacing:2px;
+            letter-spacing:3px;
             word-spacing: 3px;
             display:inline-block;
             font-size: clamp(28px, 6vw, 64px);
@@ -39,13 +39,20 @@
 
         /* Animated per-letter */
         .letter{display:inline-block;opacity:0;transform:translateY(18px) rotateX(0deg); will-change: transform, opacity; -webkit-text-fill-color: transparent;}
-        .letter.show{animation:letterIn 900ms cubic-bezier(.16,.98,.64,1) forwards;}
+        .letter.show{animation:letterIn 1000ms cubic-bezier(.16,.98,.64,1) forwards;}
         @keyframes letterIn{to{opacity:1;transform:translateY(0) rotateX(0);} }
 
         /* ensure visible gap for spaces between words (tweak value to increase/decrease) */
         .letter.space{
-            display:inline-block;   /* keep consistent with .letter */
-            min-width:0.4em;        /* adjust: 0.4em -> smaller gap, 0.8em -> larger gap */
+            display:inline-block;
+            min-width:0.45em; /* adjust gap size if needed */
+        }
+
+        .word{
+            display:inline-block;
+            white-space:nowrap; /* keep letters of a word together on one line */
+            margin-right:0.45em; /* gap between words (tweak) */
+            vertical-align:middle;
         }
 
         /* Diyas */
@@ -211,7 +218,7 @@
     const greetings = [
         "Wishing You a Joyous Diwali",
         "Diwali Ki Shubhkamnayein",
-        "Shubh Deepawali"
+        "Happy Festival of Lights",
     ];
     let greetingIndex = 0;
     // change localStorage -> sessionStorage
@@ -236,47 +243,68 @@
     // per-letter greeting render with mobile-safe gradient application
     function showGreeting(text){
         greetingEl.innerHTML = '';
+        if (typeof cycleTimer !== 'undefined' && cycleTimer) { clearTimeout(cycleTimer); cycleTimer = null; }
+
         const useClip = supportsBackgroundClipText();
         const gradCSS = getComputedStyle(document.documentElement).getPropertyValue('--greeting-grad') || 'linear-gradient(90deg,#ffd166,#ff7b00 40%,#ff2d55 80%)';
         const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent1') || '#ffd166';
 
-        for(let i=0;i<text.length;i++){
-            const ch = text[i];
-            const sp = document.createElement('span');
-            sp.className = 'letter';
+        // Split into words to prevent internal wrapping
+        const words = String(text).split(' ');
+        let globalIndex = 0;
 
-            if(/\s/.test(ch)){
-                // use non-breaking space so the browser preserves width,
-                // and add a dedicated class to control spacing.
-                sp.classList.add('space');
-                sp.textContent = '\u00A0';
-            } else {
+        words.forEach((word, wIdx) => {
+            const wordSpan = document.createElement('span');
+            wordSpan.className = 'word';
+
+            for (let i = 0; i < word.length; i++){
+                const ch = word[i];
+                const sp = document.createElement('span');
+                sp.className = 'letter';
                 sp.textContent = ch;
-            }
 
-            // gradient/fallback handling (same as before)
-            if(useClip && ch.trim().length > 0){
-                sp.style.background = gradCSS;
-                sp.style.webkitBackgroundClip = 'text';
-                sp.style.backgroundClip = 'text';
-                sp.style.webkitTextFillColor = 'transparent';
-                sp.style.backgroundSize = '200% 100%';
-                sp.style.backgroundPosition = '0 0';
-            } else if (ch.trim().length > 0) {
+                sp.style.display = 'inline-block';
                 sp.style.color = accent;
-                sp.style.webkitTextFillColor = '';
+
+                if (useClip && ch.trim().length > 0){
+                    sp.style.background = gradCSS;
+                    sp.style.webkitBackgroundClip = 'text';
+                    sp.style.backgroundClip = 'text';
+                    sp.style.webkitTextFillColor = 'transparent';
+                    sp.style.backgroundSize = '200% 100%';
+                    sp.style.backgroundPosition = '0 0';
+                } else {
+                    sp.style.background = '';
+                    sp.style.webkitBackgroundClip = '';
+                    sp.style.backgroundClip = '';
+                    sp.style.webkitTextFillColor = '';
+                }
+
+                wordSpan.appendChild(sp);
+
+                (function(s, idx){
+                    requestAnimationFrame(()=>{ void s.offsetWidth; setTimeout(()=> s.classList.add('show'), idx * 45); });
+                })(sp, globalIndex);
+
+                globalIndex++;
             }
 
-            greetingEl.appendChild(sp);
+            greetingEl.appendChild(wordSpan);
 
-            (function(s, idx){
-                requestAnimationFrame(() => {
-                    // force layout then animate
-                    void s.offsetWidth;
-                    setTimeout(()=> s.classList.add('show'), idx * 45);
-                });
-            })(sp, i);
-        }
+            // insert non-breaking space element between words (animated)
+            if (wIdx < words.length - 1){
+                const gap = document.createElement('span');
+                gap.className = 'letter space';
+                gap.textContent = '\u00A0';
+                gap.style.display = 'inline-block';
+                gap.style.color = 'transparent';
+                (function(s, idx){
+                    requestAnimationFrame(()=>{ void s.offsetWidth; setTimeout(()=> s.classList.add('show'), idx * 45); });
+                })(gap, globalIndex);
+                greetingEl.appendChild(gap);
+                globalIndex++;
+            }
+        });
     }
 
     function buildGreetingString(){
@@ -419,4 +447,3 @@
     </script>
 </body>
 </html>
-
